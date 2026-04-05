@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { api, getErrorMessage } from '../lib/api'
@@ -17,6 +17,7 @@ export function RecordsPage() {
   const [page, setPage] = useState(1)
   const [typeFilter, setTypeFilter] = useState<RecordType | ''>('')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [refetchTick, setRefetchTick] = useState(0)
 
   const [rows, setRows] = useState<FinancialRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -27,7 +28,10 @@ export function RecordsPage() {
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
   const [editing, setEditing] = useState<FinancialRecord | null>(null)
 
+  const loadGen = useRef(0)
+
   const loadRecords = useCallback(async () => {
+    const id = ++loadGen.current
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -38,17 +42,19 @@ export function RecordsPage() {
       if (categoryFilter.trim()) params.set('category', categoryFilter.trim())
 
       const res = await api.get<FinancialRecord[]>(`/api/records?${params.toString()}`)
+      if (id !== loadGen.current) return
       setRows(res.data)
     } catch (e) {
+      if (id !== loadGen.current) return
       toast.error(getErrorMessage(e, 'Could not load records'))
     } finally {
-      setLoading(false)
+      if (id === loadGen.current) setLoading(false)
     }
   }, [page, typeFilter, categoryFilter])
 
   useEffect(() => {
     void loadRecords()
-  }, [loadRecords])
+  }, [loadRecords, refetchTick])
 
   useEffect(() => {
     if (!isAdmin) return
@@ -65,6 +71,10 @@ export function RecordsPage() {
       cancelled = true
     }
   }, [isAdmin])
+
+  function bumpRefetch() {
+    setRefetchTick((t) => t + 1)
+  }
 
   async function openCreate() {
     if (isAdmin && users.length === 0) {
@@ -91,6 +101,18 @@ export function RecordsPage() {
     setModalOpen(true)
   }
 
+  /** After create: show newest rows (page 1, no filters) and always refetch even if state unchanged. */
+  function afterRecordCreated() {
+    setPage(1)
+    setTypeFilter('')
+    setCategoryFilter('')
+    bumpRefetch()
+  }
+
+  function afterRecordUpdated() {
+    bumpRefetch()
+  }
+
   async function handleDelete(id: string) {
     if (!confirm('Soft-delete this record?')) return
     setFadingId(id)
@@ -98,7 +120,7 @@ export function RecordsPage() {
       await new Promise((r) => setTimeout(r, 280))
       await api.delete(`/api/records/${id}`)
       toast.success('Record removed')
-      await loadRecords()
+      bumpRefetch()
     } catch (e) {
       toast.error(getErrorMessage(e))
     } finally {
@@ -160,7 +182,7 @@ export function RecordsPage() {
         </label>
         <button
           type="button"
-          onClick={() => void loadRecords()}
+          onClick={() => bumpRefetch()}
           className="rounded-xl border border-white/15 px-4 py-2 text-sm font-medium text-surface hover:bg-white/5"
         >
           Apply
@@ -276,7 +298,10 @@ export function RecordsPage() {
         open={modalOpen}
         mode={modalMode}
         onClose={() => setModalOpen(false)}
-        onSaved={() => void loadRecords()}
+        onSaved={(kind) => {
+          if (kind === 'create') afterRecordCreated()
+          else afterRecordUpdated()
+        }}
         record={editing}
         users={users}
       />

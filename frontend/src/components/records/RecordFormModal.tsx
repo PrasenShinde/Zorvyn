@@ -1,10 +1,10 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
 import { api, getErrorMessage } from '../../lib/api'
 import type { FinancialRecord, RecordType, UserSummary } from '../../types/api'
 import { Modal } from '../ui/Modal'
 
-const AMOUNT_HELP = 'Positive decimal, up to 2 fractional digits (e.g. 99.50)'
+const AMOUNT_HELP = 'Amount in ₹ — positive decimal, up to 2 fractional digits (e.g. 1250.50)'
 
 type Mode = 'create' | 'edit'
 
@@ -19,11 +19,12 @@ export function RecordFormModal({
   open: boolean
   mode: Mode
   onClose: () => void
-  onSaved: () => void
+  onSaved: (kind: 'create' | 'edit') => void
   record: FinancialRecord | null
   users: UserSummary[]
 }) {
   const [submitting, setSubmitting] = useState(false)
+  const submitLock = useRef(false)
 
   const [userId, setUserId] = useState('')
   const [amount, setAmount] = useState('')
@@ -53,6 +54,8 @@ export function RecordFormModal({
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
+    if (submitting || submitLock.current) return
+    submitLock.current = true
     setSubmitting(true)
     try {
       if (mode === 'create') {
@@ -65,6 +68,7 @@ export function RecordFormModal({
           notes: notes.trim() || undefined,
         })
         toast.success('Record created')
+        onSaved('create')
       } else if (record) {
         const body: { amount?: string; category?: string; notes?: string | null } = {}
         if (amount !== record.amount) body.amount = amount
@@ -79,12 +83,13 @@ export function RecordFormModal({
         }
         await api.put(`/api/records/${record.id}`, body)
         toast.success('Record updated')
+        onSaved('edit')
       }
-      onSaved()
       onClose()
     } catch (err) {
       toast.error(getErrorMessage(err))
     } finally {
+      submitLock.current = false
       setSubmitting(false)
     }
   }
@@ -143,6 +148,7 @@ export function RecordFormModal({
             onChange={(e) => setAmount(e.target.value)}
             className="mt-1 w-full rounded-xl border border-white/10 bg-primary/50 px-3 py-2.5 text-sm text-surface outline-none focus:border-accent/50"
             placeholder="0.00"
+            inputMode="decimal"
           />
           <span className="mt-1 block text-xs text-surface/45">{AMOUNT_HELP}</span>
         </label>

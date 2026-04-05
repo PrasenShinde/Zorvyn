@@ -25,6 +25,8 @@ export const validateQuery =
         errors: result.error.flatten(),
       });
     }
-    req.query = result.data as Request['query'];
+    // Never assign Zod output onto `req.query` — Express 5 expects string/query
+    // dictionaries; replacing it with numbers/objects causes runtime errors on GET.
+    req.validatedQuery = result.data;
     next();
   };
