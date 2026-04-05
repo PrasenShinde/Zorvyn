@@ -5,6 +5,8 @@ export type DashboardSummary = {
   totalExpenses: string;
   netBalance: string;
   categoryTotals: Record<string, number>;
+  /** Expense-only amounts per category (for dashboard charts). */
+  expenseCategoryTotals: Record<string, number>;
   recentActivity: Awaited<ReturnType<typeof financialRecordRepository.findAllActiveOrderByDateDesc>>;
 };
 
@@ -18,6 +20,7 @@ export const dashboardService = {
     let totalIncome = 0;
     let totalExpenses = 0;
     const categoryTotals: Record<string, number> = {};
+    const expenseCategoryTotals: Record<string, number> = {};
 
     for (const record of records) {
       const amount = parseFloat(record.amount);
@@ -32,6 +35,13 @@ export const dashboardService = {
         categoryTotals[record.category] = 0;
       }
       categoryTotals[record.category] += amount;
+
+      if (record.type === 'EXPENSE') {
+        if (!expenseCategoryTotals[record.category]) {
+          expenseCategoryTotals[record.category] = 0;
+        }
+        expenseCategoryTotals[record.category] += amount;
+      }
     }
 
     const netBalance = totalIncome - totalExpenses;
@@ -42,6 +52,7 @@ export const dashboardService = {
       totalExpenses: totalExpenses.toFixed(2),
       netBalance: netBalance.toFixed(2),
       categoryTotals,
+      expenseCategoryTotals,
       recentActivity,
     };
   },

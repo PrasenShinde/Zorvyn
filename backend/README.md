@@ -25,3 +25,8 @@ npm run dev
 ```
 
 Server listens on `PORT` from `.env` (default `3000`). Health check: `GET /health`.
+
+## Notes for the React client
+
+- Dashboard summary (`GET /api/dashboard/summary`) includes `expenseCategoryTotals` for expense-only charts, alongside `categoryTotals` (all types).
+- Admins can list users for assignment dropdowns via `GET /api/users` (JWT + `ADMIN` role).

@@ -22,4 +22,11 @@ export const userRepository = {
   update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
     return prisma.user.update({ where: { id }, data });
   },
+
+  findManySummary(): Promise<Array<{ id: string; email: string; role: Role; status: UserStatus }>> {
+    return prisma.user.findMany({
+      select: { id: true, email: true, role: true, status: true },
+      orderBy: { email: 'asc' },
+    });
+  },
 };
