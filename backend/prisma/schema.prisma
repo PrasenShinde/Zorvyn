@@ -1,0 +1,55 @@
+// SQLite: no native Decimal in Prisma — store fixed-point money as string (e.g. "12345.67").
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  VIEWER
+  ANALYST
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum RecordType {
+  INCOME
+  EXPENSE
+}
+
+model User {
+  id             String            @id @default(uuid())
+  email          String            @unique
+  password_hash  String
+  role           Role              @default(VIEWER)
+  status         UserStatus        @default(ACTIVE)
+  created_at     DateTime          @default(now())
+  updated_at     DateTime          @updatedAt
+  records        FinancialRecord[]
+}
+
+model FinancialRecord {
+  id         String      @id @default(uuid())
+  user_id    String
+  amount     String
+  type       RecordType
+  category   String
+  date       DateTime
+  notes      String?
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+  deleted_at DateTime?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([deleted_at])
+}
