@@ -1,10 +1,10 @@
 import axios from 'axios'
 import { clearAuth, getToken } from './auth-storage'
 
-const baseURL = import.meta.env.VITE_API_URL?.replace(/\/$/, '') ?? ''
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export const api = axios.create({
-  baseURL,
+  baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
 })
 
