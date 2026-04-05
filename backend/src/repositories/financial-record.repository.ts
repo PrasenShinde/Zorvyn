@@ -42,4 +42,45 @@ export const financialRecordRepository = {
       data: { deleted_at: new Date() },
     });
   },
+
+  findAllActiveOrderByDateDesc(): Promise<FinancialRecord[]> {
+    return prisma.financialRecord.findMany({
+      where: { deleted_at: null },
+      orderBy: { date: 'desc' },
+    });
+  },
+
+  create(data: {
+    user_id: string;
+    amount: string;
+    type: RecordType;
+    category: string;
+    date: Date;
+    notes?: string | null;
+  }): Promise<FinancialRecord> {
+    return prisma.financialRecord.create({
+      data: {
+        user_id: data.user_id,
+        amount: data.amount,
+        type: data.type,
+        category: data.category,
+        date: data.date,
+        notes: data.notes ?? null,
+      },
+    });
+  },
+
+  update(
+    id: string,
+    data: {
+      amount?: string;
+      category?: string;
+      notes?: string | null;
+    }
+  ): Promise<FinancialRecord> {
+    return prisma.financialRecord.update({
+      where: { id },
+      data,
+    });
+  },
 };

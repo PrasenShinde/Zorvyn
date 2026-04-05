@@ -1,8 +1,17 @@
 import { Router } from 'express';
-import { deleteRecord, getRecords } from '../controllers/record.controller.js';
+import {
+  createRecord,
+  deleteRecord,
+  getRecords,
+  updateRecord,
+} from '../controllers/record.controller.js';
 import { authenticate, authorize } from '../middlewares/auth.middleware.js';
-import { validateQuery } from '../middlewares/validate.middleware.js';
-import { listRecordsQuerySchema } from '../schemas/record.schemas.js';
+import { validateBody, validateQuery } from '../middlewares/validate.middleware.js';
+import {
+  createRecordBodySchema,
+  listRecordsQuerySchema,
+  updateRecordBodySchema,
+} from '../schemas/record.schemas.js';
 import { Role } from '@prisma/client';
 
 const router = Router();
@@ -13,6 +22,22 @@ router.get(
   authorize([Role.ADMIN, Role.ANALYST]),
   validateQuery(listRecordsQuerySchema),
   getRecords
+);
+
+router.post(
+  '/records',
+  authenticate,
+  authorize([Role.ADMIN]),
+  validateBody(createRecordBodySchema),
+  createRecord
+);
+
+router.put(
+  '/records/:id',
+  authenticate,
+  authorize([Role.ADMIN]),
+  validateBody(updateRecordBodySchema),
+  updateRecord
 );
 
 router.delete('/records/:id', authenticate, authorize([Role.ADMIN]), deleteRecord);

@@ -1,6 +1,8 @@
 import type { RecordType, Role } from '@prisma/client';
 import { AppError } from '../utils/app-error.js';
 import { financialRecordRepository } from '../repositories/financial-record.repository.js';
+import { userRepository } from '../repositories/user.repository.js';
+import type { CreateRecordBody, UpdateRecordBody } from '../schemas/record.schemas.js';
 
 export const recordService = {
   async list(
@@ -35,5 +37,39 @@ export const recordService = {
 
     await financialRecordRepository.softDelete(id);
     return { message: 'Record deleted successfully' as const };
+  },
+
+  async create(body: CreateRecordBody) {
+    const user = await userRepository.findById(body.user_id);
+    if (!user) {
+      throw new AppError(404, 'User not found');
+    }
+
+    return financialRecordRepository.create({
+      user_id: body.user_id,
+      amount: body.amount,
+      type: body.type,
+      category: body.category,
+      date: body.date,
+      notes: body.notes,
+    });
+  },
+
+  async update(id: string, body: UpdateRecordBody) {
+    const row = await financialRecordRepository.findActiveById(id);
+    if (!row) {
+      throw new AppError(404, 'Record not found');
+    }
+
+    const data: {
+      amount?: string;
+      category?: string;
+      notes?: string | null;
+    } = {};
+    if (body.amount !== undefined) data.amount = body.amount;
+    if (body.category !== undefined) data.category = body.category;
+    if (body.notes !== undefined) data.notes = body.notes;
+
+    return financialRecordRepository.update(id, data);
   },
 };
