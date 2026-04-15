@@ -5,7 +5,7 @@ A complete full-stack application designed to securely manage financial records 
 ---
 
 ## 🌟 Project Overview
-
+ 
 This project serves as a financial management hub where users can track income, expenses, and view visual analytics. The system natively enforces access control based on three distinct user roles:
 
 * **👑 Admin:** Has full system access. Can create, view, update, and soft-delete any financial record. Can also manage users.
