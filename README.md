@@ -1,7 +1,7 @@
 # 💰 Finance Dashboard & Access Control System
 
 A complete full-stack application designed to securely manage financial records with strict **Role-Based Access Control (RBAC)**. This project features a robust Node.js/Express backend and a modern, responsive React frontend.
-
+ 
 ---
 
 ## 🌟 Project Overview
