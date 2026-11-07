@@ -64,3 +64,7 @@ Once you have run the seed script on the backend (`npm run db:seed`), you can lo
 
 * **SQLite String for Money:** Prisma does not support the native `Decimal` type on SQLite. To preserve exact precision and avoid floating-point rounding errors typical of financial applications, amounts are stored as strings and validated strictly via regular expressions.
 * **In-Memory Aggregation for Dashboard:** To maintain database agility on SQLite without relying on complex, engine-specific SQL casting functions, analytical processing was moved to the service layer. In a production environment with PostgreSQL, this would be refactored to native database `SUM()` and `GROUP BY` aggregations.
+
+
+
+* **Updated readme.md:** 
